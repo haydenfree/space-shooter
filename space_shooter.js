@@ -278,7 +278,7 @@ class Enemy extends Body {
 		// new enemies spawn above the top boarder of the canvas, and at a random x position
 		this.position = {
 			x: Math.random() * (config.canvas_size.width - 0) + 0,
-			y: config.canvas_size.height + 20
+			y: -20
 		};
 	}
 
@@ -319,21 +319,43 @@ class Enemy extends Body {
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
-		// This should always evaluate to true 
-		// TODO - Consider removing this and the controller. Then just update the enemy to move via this.position.y += 1
-		if (this.controller.move_y == 1) {
-			this.position.y += 1;
-		}
+		this.velocity.y = this.controller.move_y * this.speed;
 		super.update(delta_time);
-
-		// clip to screen
-		/* TODO - The enemy doesn't need to be clipped in the x direction since it only moves down
-			When the enemy moves below the border of the canvas, it should be queued for removal
-		*/
-		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
-		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
+		
+		// Remove this entity once it has gone below the bottom border of the canvas
+		if (this.position.y > config.canvas_size.height) {
+			this.remove();
+		}
+		
 	}
 	
+}
+
+/**
+ * Responsible for spawning new enemy entities
+ * 
+ * @typedef EnemySpawner
+ */
+class EnemySpawner {
+	// Counts the number of seconds since the last time update was called.
+	secondsSinceUpdate = 0;
+	
+	/**
+	 * Spawns in 5 new enemies per second
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		this.secondsSinceUpdate += delta_time;
+		if(this.secondsSinceUpdate >= 1) {
+			this.secondsSinceUpdate = 0;
+			new Enemy();
+			new Enemy();
+			new Enemy();
+			new Enemy();
+			new Enemy();
+		}
+	}
 }
 
 /* 
@@ -512,7 +534,7 @@ function start() {
 	entities = [];
 	queued_entities_for_removal = [];
 	player = new Player();
-	// enemy_spawner = your implementation
+	enemy_spawner = new EnemySpawner();
 	// collision_handler = your implementation
 }
 
