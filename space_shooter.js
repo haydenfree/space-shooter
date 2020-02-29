@@ -227,26 +227,20 @@ class Player extends Body {
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
-		/*
-			implement player movement here!
-
-			I recommend you look at the development console's log to get a hint as to how you can use the
-			controllers state to implement movement.
-
-			You can also log the current state of the player's controller with the following code
-			console.log(this.controller);
-		 */
-	
-		if(this.controller.move_x == 1){ // when w is pressed
+		// when w is pressed
+		if (this.controller.move_x == 1) { 
 			this.position.x += 1;
 		}
-		if(this.controller.move_x == -1){ // when s is pressed
+		// when s is pressed
+		if (this.controller.move_x == -1) { 
 			this.position.x -= 1;
 		}
-		if(this.controller.move_y == 1){ // when d is pressed
+		// when d is pressed
+		if (this.controller.move_y == 1) { 
 			this.position.y += 1;
 		}
-		if(this.controller.move_y == -1){ // when a is pressed
+		// when a is pressed
+		if (this.controller.move_y == -1) { 
 			this.position.y -= 1;
 		}
 		super.update(delta_time);
@@ -254,6 +248,34 @@ class Player extends Body {
 		// clip to screen
 		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
 		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
+	}
+}
+
+/**
+ * Represents an enemy body.
+ * 
+ * @typedef Enemy
+ */
+class Enemy extends Body {
+	// this controller object stays the same since enemies only move down
+	controller = {
+		move_x: 0,
+		move_y: 1,
+		action_1: false
+	};
+	speed = 100;
+
+	/**
+	 * Creates a new enemy with the default attributes.
+	 */
+	constructor() {
+		super();
+
+		// new enemies spawn above the top boarder of the canvas, and at a random x position
+		this.position = {
+			x: Math.random() * (config.canvas_size.width - 0) + 0,
+			y: config.canvas_size.height + 20
+		};
 	}
 }
 
