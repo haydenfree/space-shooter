@@ -227,21 +227,25 @@ class Player extends Body {
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
-		// when d is pressed
-		if (this.controller.move_x == 1) {
-			this.position.x += 1;
+		// Moving only left or right
+		if (this.controller.move_x != 0 && this.controller.move_y == 0) {
+			this.velocity.y = 0;
+			this.velocity.x = this.controller.move_x * this.speed;
+		} 
+		// Moving only up or down
+		else if (this.controller.move_y != 0 && this.controller.move_x == 0) {
+			this.velocity.x = 0;
+			this.velocity.y = this.controller.move_y * this.speed;
 		}
-		// when a is pressed
-		if (this.controller.move_x == -1) {
-			this.position.x -= 1;
+		// Moving diagonally
+		else if (this.controller.move_y != 0 && this.controller.move_x != 0) {
+			this.velocity.x = this.controller.move_x * Math.sqrt(Math.pow(this.speed, 2) / 2)
+			this.velocity.y = this.controller.move_y * Math.sqrt(Math.pow(this.speed, 2) / 2)
 		}
-		// when s is pressed
-		if (this.controller.move_y == 1) {
-			this.position.y += 1;
-		}
-		// when w is pressed
-		if (this.controller.move_y == -1) {
-			this.position.y -= 1;
+		// No movement so set velocity to 0
+		else {
+			this.velocity.x = 0;
+			this.velocity.y = 0;
 		}
 		super.update(delta_time);
 
