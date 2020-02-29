@@ -12,13 +12,13 @@
 class InputHandler {
 	key_code_mappings = {
 		button: {
-			32: {key: 'space', state: 'action_1'}
+			32: { key: 'space', state: 'action_1' }
 		},
 		axis: {
-			68: {key: 'right', state: 'move_x', mod: 1},
-			65: {key: 'left', state: 'move_x', mod: -1},
-			87: {key: 'up', state: 'move_y', mod: -1},
-			83: {key: 'down', state: 'move_y', mod: 1}
+			68: { key: 'right', state: 'move_x', mod: 1 },
+			65: { key: 'left', state: 'move_x', mod: -1 },
+			87: { key: 'up', state: 'move_y', mod: -1 },
+			83: { key: 'down', state: 'move_y', mod: 1 }
 		}
 	};
 	player = null;
@@ -40,14 +40,14 @@ class InputHandler {
 		// ignore event handling if they are holding down the button
 		if (event.repeat || event.isComposing || event.keyCode === 229)
 			return;
-	
+
 		// check if axis mapping exists
 		if (this.key_code_mappings.axis.hasOwnProperty(event.keyCode)) {
 			const mapping = this.key_code_mappings.axis[event.keyCode];
 			this.player.controller[mapping.state] += mapping.mod;
 			console.log(`input_handler[axis:${mapping.state} state:${this.player.controller[mapping.state]}]`);
 		}
-	
+
 		// check if button mapping exists
 		if (this.key_code_mappings.button.hasOwnProperty(event.keyCode)) {
 			const mapping = this.key_code_mappings.button[event.keyCode];
@@ -71,7 +71,7 @@ class InputHandler {
 			this.player.controller[mapping.state] -= mapping.mod;
 			console.log(`input_handler[axis:${mapping.state} state:${this.player.controller[mapping.state]}]`);
 		}
-	
+
 		// check if button mapping exists
 		if (this.key_code_mappings.button.hasOwnProperty(event.keyCode)) {
 			const mapping = this.key_code_mappings.button[event.keyCode];
@@ -94,9 +94,9 @@ class InputHandler {
  * @typedef Body
  */
 class Body {
-	position = {x: 0, y: 0};
-	velocity = {x: 0, y: 0};
-	size = {width: 10, height: 10};
+	position = { x: 0, y: 0 };
+	velocity = { x: 0, y: 0 };
+	size = { width: 10, height: 10 };
 	health = 100;
 
 	/**
@@ -228,19 +228,19 @@ class Player extends Body {
 	 */
 	update(delta_time) {
 		// when w is pressed
-		if (this.controller.move_x == 1) { 
+		if (this.controller.move_x == 1) {
 			this.position.x += 1;
 		}
 		// when s is pressed
-		if (this.controller.move_x == -1) { 
+		if (this.controller.move_x == -1) {
 			this.position.x -= 1;
 		}
 		// when d is pressed
-		if (this.controller.move_y == 1) { 
+		if (this.controller.move_y == 1) {
 			this.position.y += 1;
 		}
 		// when a is pressed
-		if (this.controller.move_y == -1) { 
+		if (this.controller.move_y == -1) {
 			this.position.y -= 1;
 		}
 		super.update(delta_time);
