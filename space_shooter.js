@@ -227,19 +227,19 @@ class Player extends Body {
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
-		// when w is pressed
+		// when d is pressed
 		if (this.controller.move_x == 1) {
 			this.position.x += 1;
 		}
-		// when s is pressed
+		// when a is pressed
 		if (this.controller.move_x == -1) {
 			this.position.x -= 1;
 		}
-		// when d is pressed
+		// when s is pressed
 		if (this.controller.move_y == 1) {
 			this.position.y += 1;
 		}
-		// when a is pressed
+		// when w is pressed
 		if (this.controller.move_y == -1) {
 			this.position.y -= 1;
 		}
@@ -277,6 +277,59 @@ class Enemy extends Body {
 			y: config.canvas_size.height + 20
 		};
 	}
+
+	/**
+	 * Draws the enemy as a red triangle
+	 * 
+	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
+	 */
+	draw(graphics) {
+		graphics.strokeStyle = 'red';
+		graphics.beginPath();
+		graphics.moveTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x + this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x - this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.stroke();
+
+		// draw velocity lines
+		super.draw(graphics);
+	}
+
+	/**
+	 * Updates the enemy given the state of the enemy's controller.
+	 * Note that the enemy's controller should never update, so it will only move down
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		// This should always evaluate to true 
+		// TODO - Consider removing this and the controller. Then just update the enemy to move via this.position.y += 1
+		if (this.controller.move_y == 1) {
+			this.position.y += 1;
+		}
+		super.update(delta_time);
+
+		// clip to screen
+		/* TODO - The enemy doesn't need to be clipped in the x direction since it only moves down
+			When the enemy moves below the border of the canvas, it should be queued for removal
+		*/
+		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
+		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
+	}
+	
 }
 
 /* 
