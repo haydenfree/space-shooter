@@ -231,7 +231,7 @@ class Player extends Body {
 		if (this.controller.move_x != 0 && this.controller.move_y == 0) {
 			this.velocity.y = 0;
 			this.velocity.x = this.controller.move_x * this.speed;
-		} 
+		}
 		// Moving only up or down
 		else if (this.controller.move_y != 0 && this.controller.move_x == 0) {
 			this.velocity.x = 0;
@@ -321,25 +321,25 @@ class Enemy extends Body {
 	update(delta_time) {
 		this.velocity.y = this.controller.move_y * this.speed;
 		super.update(delta_time);
-		
+
 		// Remove this entity once it has gone below the bottom border of the canvas
 		if (this.position.y > config.canvas_size.height) {
 			this.remove();
 		}
-		
+
 	}
-	
+
 }
 
 /**
- * Responsible for spawning new enemy entities
+ * Responsible for detecting collision between entities 
  * 
  * @typedef EnemySpawner
  */
 class EnemySpawner {
 	// Counts the number of seconds since the last time update was called.
 	secondsSinceUpdate = 0;
-	
+
 	/**
 	 * Spawns in 5 new enemies per second
 	 * 
@@ -347,7 +347,7 @@ class EnemySpawner {
 	 */
 	update(delta_time) {
 		this.secondsSinceUpdate += delta_time;
-		if(this.secondsSinceUpdate >= 1) {
+		if (this.secondsSinceUpdate >= 1) {
 			this.secondsSinceUpdate = 0;
 			new Enemy();
 			new Enemy();
@@ -355,6 +355,46 @@ class EnemySpawner {
 			new Enemy();
 			new Enemy();
 		}
+	}
+}
+
+/**
+ * Responsible for spawning new enemy entities
+ *
+ * @typedef CollisionHandler
+ */
+class CollisionHandler {
+
+	/**
+	 * Checks for a collision between every pair of entities
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		Object.values(entities).forEach(entity1 => {
+			Object.values(entities).forEach(entity2 => {
+				// Handle edge case where the entity is compared to itself
+				if (entity1.id != entity2.id) {
+					if (entity1.position.x < entity2.position.x + entity2.size.width &&
+						entity1.position.x + entity1.size.width > entity2.position.x &&
+						entity1.position.y < entity2.position.y + entity2.size.height &&
+						entity1.position.y + entity1.size.height > entity2.position.y) {
+						// collision detected!
+						if(entity1.constructor.name == "Player"){
+							// entity1 is a player, take 25 damage (collision detected twice, so -12.5)
+							// entity2 must be an enemy, remove it
+							entity1.health -= 12.5;
+							entity2.remove();
+						} else if (entity2.constructor.name == "Player") {
+							// entity1 must be an enemy, remove it
+							// entity2 is a player, take 25 damage (collision detected twice, so -12.5)
+							entity1.remove();
+							entity2.health -= 12.5;
+						}
+					}
+				}
+			});
+		});
 	}
 }
 
@@ -383,6 +423,7 @@ config.update_rate.seconds = 1 / config.update_rate.fps;
 
 // grab the html span
 const game_state = document.getElementById('game_state');
+const player_health = document.getElementById('player_health');
 
 // grab the html canvas
 const game_canvas = document.getElementById('game_canvas');
@@ -524,7 +565,8 @@ function loop(curr_time) {
 		last_time = curr_time;
 		loop_count++;
 
-		game_state.innerHTML = `loop count ${loop_count}`;
+		game_state.innerHTML = `Loop Count: ${loop_count}`;
+		player_health.innerHTML = `Player Health: ${player.health}`;
 	}
 
 	window.requestAnimationFrame(loop);
@@ -535,7 +577,7 @@ function start() {
 	queued_entities_for_removal = [];
 	player = new Player();
 	enemy_spawner = new EnemySpawner();
-	// collision_handler = your implementation
+	collision_handler = new CollisionHandler();
 }
 
 // start the game
