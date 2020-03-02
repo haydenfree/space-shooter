@@ -98,7 +98,6 @@ class Body {
 	velocity = { x: 0, y: 0 };
 	size = { width: 10, height: 10 };
 	health = 100;
-
 	/**
 	 * Creates a new body with all of the default attributes
 	 */
@@ -152,14 +151,67 @@ class Body {
 		graphics.stroke();
 	}
 
+	
+
 	/**
 	 * Marks this body to be removed at the end of the update loop
 	 */
 	remove() {
-		queued_entities_for_removal.push(this.id);
+		queued_entities_for_removal.push(this.id);	
 	}
 }
+/**
+ * Represents a proctile for a player Combat
+ * 
+ * @typedef player_Combat
+ */
+class player_Combat extends Body{
+	position = { x: 0, y: 0 };
+	secondsSinceUpdate = 0;
+	constructor(x,y){
+		super();
+		this.position.x =  x;
+		this.position.y =  y-10;
+	}
+	
 
+	draw(graphics) {
+		graphics.strokeStyle = '#000000';
+		graphics.beginPath();
+		graphics.moveTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x + this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x - this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.stroke();
+		// draw velocity lines
+		super.draw(graphics);
+	}
+
+	update(delta_time){
+			
+			this.position.y -= 5; 
+		super.update(delta_time);
+		// Remove this entity once it has gone below the bottom border of the canvas
+		if (this.position.y == 0) {
+			console.log("deleted");  
+			this.remove();
+		}
+}
+
+
+}
 /**
  * Represents an player body. Extends a Body by handling input binding and controller management.
  * 
@@ -172,6 +224,7 @@ class Player extends Body {
 		move_y: 0,
 		action_1: false
 	};
+
 	speed = 100;
 	input_handler = null;
 
@@ -190,6 +243,7 @@ class Player extends Body {
 			y: config.canvas_size.height - 100
 		};
 	}
+	
 
 	/**
 	 * Draws the player as a triangle centered on the player's location.
@@ -216,7 +270,6 @@ class Player extends Body {
 			this.position.y - this.half_size.height
 		);
 		graphics.stroke();
-
 		// draw velocity lines
 		super.draw(graphics);
 	}
@@ -247,13 +300,19 @@ class Player extends Body {
 			this.velocity.x = 0;
 			this.velocity.y = 0;
 		}
+		if(this.controller.action_1){
+			new player_Combat(this.position.x, this.position.y);
+		}
+		// console.log(this.position);
 		super.update(delta_time);
-
+		
 		// clip to screen
 		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
 		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
 	}
 }
+
+
 
 /**
  * Represents an enemy body.
@@ -271,7 +330,7 @@ class Enemy extends Body {
 
 	/**
 	 * Creates a new enemy with the default attributes.
-	 */
+	 */   
 	constructor() {
 		super();
 
@@ -340,8 +399,8 @@ class EnemySpawner {
 	// Counts the number of seconds since the last time update was called.
 	secondsSinceUpdate = 0;
 
-	/**
-	 * Spawns in 5 new enemies per second
+	/** 
+	 * Spawns in 6 new enemies per second
 	 * 
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
@@ -349,6 +408,7 @@ class EnemySpawner {
 		this.secondsSinceUpdate += delta_time;
 		if (this.secondsSinceUpdate >= 1) {
 			this.secondsSinceUpdate = 0;
+			new Enemy();
 			new Enemy();
 			new Enemy();
 			new Enemy();
@@ -364,13 +424,14 @@ class EnemySpawner {
  * @typedef CollisionHandler
  */
 class CollisionHandler {
-
+	count = 0;
 	/**
 	 * Checks for a collision between every pair of entities
 	 * 
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
+		
 		Object.values(entities).forEach(entity1 => {
 			Object.values(entities).forEach(entity2 => {
 				// Handle edge case where the entity is compared to itself
@@ -380,23 +441,40 @@ class CollisionHandler {
 						entity1.position.y < entity2.position.y + entity2.size.height &&
 						entity1.position.y + entity1.size.height > entity2.position.y) {
 						// collision detected!
+						if(entity1.constructor.name == "player_Combat"){
+							// entity1 is a player, take 25 damage (collision detected twice, so -12.5)
+							// entity2 must be an enemy, remove it
+							this.count += 0.5;
+							entity2.remove();
+							
+						} else if (entity2.constructor.name == "player_Combat") {
+							// entity1 must be an enemy, remove it
+							// entity2 is a player, take 25 damage (collision detected twice, so -12.5)
+							entity1.remove();	
+							this.count += 0.5;						
+						}
 						if(entity1.constructor.name == "Player"){
 							// entity1 is a player, take 25 damage (collision detected twice, so -12.5)
 							// entity2 must be an enemy, remove it
 							entity1.health -= 12.5;
 							entity2.remove();
+
+							
 						} else if (entity2.constructor.name == "Player") {
 							// entity1 must be an enemy, remove it
 							// entity2 is a player, take 25 damage (collision detected twice, so -12.5)
 							entity1.remove();
 							entity2.health -= 12.5;
+							
 						}
+
 					}
 				}
 			});
 		});
 	}
 }
+
 
 /* 
 ------------------------------
@@ -530,7 +608,7 @@ function draw(graphics) {
 		graphics.font = "30px Arial";
 		graphics.textAlign = "center";
 		graphics.fillText('Game Over', config.canvas_size.width / 2, config.canvas_size.height / 2);
-
+		  
 		graphics.font = "12px Arial";
 		graphics.textAlign = "center";
 		graphics.fillText('press space to restart', config.canvas_size.width / 2, 18 + config.canvas_size.height / 2);
@@ -567,6 +645,7 @@ function loop(curr_time) {
 
 		game_state.innerHTML = `Loop Count: ${loop_count}`;
 		player_health.innerHTML = `Player Health: ${player.health}`;
+		enemy_killed.innerHTML = `Enemy Killed:${collision_handler.count}`;
 	}
 
 	window.requestAnimationFrame(loop);
@@ -576,10 +655,11 @@ function start() {
 	entities = [];
 	queued_entities_for_removal = [];
 	player = new Player();
+	
 	enemy_spawner = new EnemySpawner();
 	collision_handler = new CollisionHandler();
 }
-
+ 
 // start the game
 start();
 
