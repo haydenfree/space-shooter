@@ -247,6 +247,9 @@ class Player extends Body {
 			this.velocity.x = 0;
 			this.velocity.y = 0;
 		}
+		if(this.controller.action_1 == true){
+			new Player_Combat(); 
+		}
 		super.update(delta_time);
 
 		// clip to screen
@@ -254,7 +257,74 @@ class Player extends Body {
 		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
 	}
 }
+class Player_Combat extends Player{
+	controller = {
+		move_x: 0,
+		move_y: -1,
+		action_1: false
+	};
+	speed = 100;
 
+	/**
+	 * Creates a new enemy with the default attributes.
+	 */
+	constructor() {
+		super();
+
+		// new enemies spawn above the top boarder of the canvas, and at a random x position
+		this.position = {
+			x: player.position.x,
+			y: player.position.y
+		};
+	}
+
+	/**
+	 * Draws the enemy as a red triangle
+	 * 
+	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
+	 */
+	draw(graphics) {
+		graphics.strokeStyle = 'blue';
+		graphics.beginPath();
+		graphics.moveTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x + this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x - this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.stroke();
+
+		// draw velocity lines
+		super.draw(graphics);
+	}
+
+	/**
+	 * Updates the enemy given the state of the enemy's controller.
+	 * Note that the enemy's controller should never update, so it will only move down
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		this.velocity.y = this.controller.move_y * this.speed;
+		super.update(delta_time);
+
+		// Remove this entity once it has gone below the bottom border of the canvas
+		if (this.position.y == -config.canvas_size.height) {
+			this.remove();
+		}
+
+	}
+}
 /**
  * Represents an enemy body.
  * 
@@ -397,7 +467,6 @@ class CollisionHandler {
 		});
 	}
 }
-
 /* 
 ------------------------------
 ------ CONFIG SECTION -------- 
