@@ -12,13 +12,13 @@
 class InputHandler {
 	key_code_mappings = {
 		button: {
-			32: { key: 'space', state: 'action_1' }
+			32: {key: 'space', state: 'action_1'}
 		},
 		axis: {
-			68: { key: 'right', state: 'move_x', mod: 1 },
-			65: { key: 'left', state: 'move_x', mod: -1 },
-			87: { key: 'up', state: 'move_y', mod: -1 },
-			83: { key: 'down', state: 'move_y', mod: 1 }
+			68: {key: 'right', state: 'move_x', mod: 1},
+			65: {key: 'left', state: 'move_x', mod: -1},
+			87: {key: 'up', state: 'move_y', mod: -1},
+			83: {key: 'down', state: 'move_y', mod: 1}
 		}
 	};
 	player = null;
@@ -37,23 +37,7 @@ class InputHandler {
 	 * @param {Object} event The keydown event
 	 */
 	keydown(event) {
-		// ignore event handling if they are holding down the button
-		if (event.repeat || event.isComposing || event.keyCode === 229)
-			return;
-
-		// check if axis mapping exists
-		if (this.key_code_mappings.axis.hasOwnProperty(event.keyCode)) {
-			const mapping = this.key_code_mappings.axis[event.keyCode];
-			this.player.controller[mapping.state] += mapping.mod;
-			console.log(`input_handler[axis:${mapping.state} state:${this.player.controller[mapping.state]}]`);
-		}
-
-		// check if button mapping exists
-		if (this.key_code_mappings.button.hasOwnProperty(event.keyCode)) {
-			const mapping = this.key_code_mappings.button[event.keyCode];
-			this.player.controller[mapping.state] = true;
-			console.log(`input_handler[button:${mapping.state} state:${this.player.controller[mapping.state]}]`);
-		}
+		this.player.raw_input[event.keyCode] = true;
 	}
 
 	/**
@@ -62,21 +46,36 @@ class InputHandler {
 	 * @param {Object} event The keyup event
 	 */
 	keyup(event) {
-		if (event.isComposing || event.keyCode === 229)
-			return;
+		delete this.player.raw_input[event.keyCode];
+	}
 
-		// check if axis mapping exists
-		if (this.key_code_mappings.axis.hasOwnProperty(event.keyCode)) {
-			const mapping = this.key_code_mappings.axis[event.keyCode];
-			this.player.controller[mapping.state] -= mapping.mod;
-			console.log(`input_handler[axis:${mapping.state} state:${this.player.controller[mapping.state]}]`);
+	resetController() {
+		// reset all buttons to false
+		for (let mapping of Object.values(this.key_code_mappings.button)) {
+			this.player.controller[mapping.state] = false;
 		}
 
-		// check if button mapping exists
-		if (this.key_code_mappings.button.hasOwnProperty(event.keyCode)) {
-			const mapping = this.key_code_mappings.button[event.keyCode];
-			this.player.controller[mapping.state] = false;
-			console.log(`input_handler[button:${mapping.state} state:${this.player.controller[mapping.state]}]`);
+		// reset all axis to zero
+		for (let mapping of Object.values(this.key_code_mappings.axis)) {
+			this.player.controller[mapping.state] = 0;
+		}
+	}
+
+	pollController() {
+		this.resetController();
+
+		// poll all bound buttons
+		for (let [key_code, mapping] of Object.entries(this.key_code_mappings.button)) {
+			if (this.player.raw_input[key_code] === true) {
+				this.player.controller[mapping.state] = true;
+			}
+		}
+
+		// poll all bound axis
+		for (let [key_code, mapping] of Object.entries(this.key_code_mappings.axis)) {
+			if (this.player.raw_input[key_code] === true) {
+				this.player.controller[mapping.state] += mapping.mod;
+			}
 		}
 	}
 }
@@ -94,10 +93,11 @@ class InputHandler {
  * @typedef Body
  */
 class Body {
-	position = { x: 0, y: 0 };
-	velocity = { x: 0, y: 0 };
-	size = { width: 10, height: 10 };
+	position = {x: 0, y: 0};
+	velocity = {x: 0, y: 0};
+	size = {width: 10, height: 10};
 	health = 100;
+
 	/**
 	 * Creates a new body with all of the default attributes
 	 */
@@ -151,13 +151,212 @@ class Body {
 		graphics.stroke();
 	}
 
-	
-
 	/**
 	 * Marks this body to be removed at the end of the update loop
 	 */
 	remove() {
-		queued_entities_for_removal.push(this.id);	
+		queued_entities_for_removal.push(this.id);
+	}
+}
+
+/**
+ * Represents an player body. Extends a Body by handling input binding and controller management.
+ * 
+ * @typedef Player
+ */
+class Player extends Body {
+	// this controller object is updated by the bound input_handler
+	controller = {
+		move_x: 0,
+		move_y: 0,
+		action_1: false
+	};
+	raw_input = {};
+	speed = 100;
+	input_handler = null;
+	cooldown = 1;
+	/**
+	 * Creates a new player with the default attributes.
+	 */
+	constructor() {
+		super();
+
+		// bind the input handler to this object
+		this.input_handler = new InputHandler(this);
+
+		// we always want our new players to be at this location
+		this.position = {
+			x: config.canvas_size.width / 2,
+			y: config.canvas_size.height - 100
+		};
+	}
+
+	/**
+	 * Draws the player as a triangle centered on the player's location.
+	 * 
+	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
+	 */
+	draw(graphics) {
+		graphics.strokeStyle = '#000000';
+		graphics.beginPath();
+		graphics.moveTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x + this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x - this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.stroke();
+
+		// draw velocity lines
+		super.draw(graphics);
+	}
+
+	/**
+	 * Updates the player given the state of the player's controller.
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		/*
+			implement player movement here!
+
+			I recommend you look at the development console's log to get a hint as to how you can use the
+			controllers state to implement movement.
+
+			You can also log the current state of the player's controller with the following code
+			console.log(this.controller);
+		 */
+		console.log(this.controller);
+		if(this.controller.move_x == 0){
+			this.velocity.x = this.controller.move_x *this.speed;
+		}
+		if(this.controller.move_x == 1){
+			this.velocity.x = this.controller.move_x *this.speed;
+		}
+		if(this.controller.move_x == -1){
+			this.velocity.x = this.controller.move_x *this.speed;
+		}
+		if(this.controller.move_y == 0){
+			this.velocity.y = this.controller.move_y *this.speed;
+		}
+		if(this.controller.move_y == 1){
+			this.velocity.y = this.controller.move_y *this.speed;
+		}
+		if(this.controller.move_y == -1){
+			this.velocity.y = this.controller.move_y *this.speed;
+		}
+		if(this.controller.action_1 == true && this.cooldown > .5){
+			new player_Combat(this.position.x, this.position.y);
+
+		}
+		// update position
+		super.update(delta_time);
+
+		// clip to screen
+		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
+		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
+	}
+}
+/**
+ * Represents an enemy body.
+ * 
+ * @typedef Enemy
+ */
+class Enemy extends Body {
+	// this controller object is updated by the bound input_handler
+	controller = {
+		move_x: 0,
+		move_y: 1,
+		action_1: false
+	};
+	raw_input = {};
+	speed = 100;
+	input_handler = null;
+
+	constructor() {
+		super();
+
+		// we always want our new players to be at this location
+		this.position = {
+			x: Math.random() * (config.canvas_size.width - 0) + 0,
+			y: -20
+		};
+	}
+	draw(graphics) {
+		graphics.strokeStyle = '#000000';
+		graphics.beginPath();
+		graphics.moveTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x + this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x - this.half_size.width,
+			this.position.y + this.half_size.height
+		);
+		graphics.lineTo(
+			this.position.x,
+			this.position.y - this.half_size.height
+		);
+		graphics.stroke();
+	}
+	update(delta_time) {
+		this.velocity.y = this.controller.move_y * this.speed;
+		super.update(delta_time);
+		if (this.position.x < player.position.x + player.size.width &&
+			this.position.x + this.size.width > player.position.x &&
+			this.position.y < player.position.y + player.size.height &&
+			this.position.y + this.size.height > player.position.y){
+				console.log("COLLISION DETECTED");
+				this.remove();
+				player.health -= 25;
+			}
+		// Remove this entity once it has gone below the bottom border of the canvas
+		if (this.position.y >= config.canvas_size.height) {
+			this.remove();
+		}
+
+	}
+
+}
+/**
+ * Responsible for spawning entities of enemy
+ * 
+ * @typedef EnemySpawner
+ */
+class EnemySpawner {
+	// Counts the number of seconds since the last time update was called.
+	secondsSinceUpdate = 0;
+
+	/** 
+	 * Spawns in 6 new enemies per second
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
+	update(delta_time) {
+		this.secondsSinceUpdate += delta_time;
+		if (this.secondsSinceUpdate >= 1) {
+			this.secondsSinceUpdate = 0;
+			new Enemy();
+			new Enemy();
+			new Enemy();
+			new Enemy();
+			new Enemy();
+			new Enemy();
+		}
 	}
 }
 /**
@@ -167,7 +366,7 @@ class Body {
  */
 class player_Combat extends Body{
 	position = { x: 0, y: 0 };
-	secondsSinceUpdate = 0;
+	cooldown = 1;
 	constructor(x,y){
 		super();
 		this.position.x =  x;
@@ -200,11 +399,31 @@ class player_Combat extends Body{
 	}
 
 	update(delta_time){
-			
-			this.position.y -= 5; 
+		this.position.y -= 5; 
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
-		if (this.position.y == 0) {
+		Object.values(entities).forEach(entity1 => {
+			Object.values(entities).forEach(entity2 => {
+				if (entity1.id != entity2.id) {
+					if (entity1.position.x < entity2.position.x + entity2.size.width &&
+					entity1.position.x + entity1.size.width > entity2.position.x &&
+					entity1.position.y < entity2.position.y + entity2.size.height &&
+					entity1.position.y + entity1.size.height > entity2.position.y) {
+						points_scored += 1;
+						if(entity1.constructor.name == "Enemy"){
+							// entity1 must be an enemy, remove it
+							entity1.remove(); 
+							
+						} else if (entity2.constructor.name == "Enemy") {
+							// entity2 must be an enemy, remove it
+							entity2.remove();
+						}
+						
+					}
+				}
+			});
+		});
+		if (this.position.y == 0) {  
 			console.log("deleted");  
 			this.remove();
 		}
@@ -212,270 +431,6 @@ class player_Combat extends Body{
 
 
 }
-/**
- * Represents an player body. Extends a Body by handling input binding and controller management.
- * 
- * @typedef Player
- */
-class Player extends Body {
-	// this controller object is updated by the bound input_handler
-	controller = {
-		move_x: 0,
-		move_y: 0,
-		action_1: false
-	};
-
-	speed = 100;
-	input_handler = null;
-
-	/**
-	 * Creates a new player with the default attributes.
-	 */
-	constructor() {
-		super();
-
-		// bind the input handler to this object
-		this.input_handler = new InputHandler(this);
-
-		// we always want our new players to be at this location
-		this.position = {
-			x: config.canvas_size.width / 2,
-			y: config.canvas_size.height - 100
-		};
-	}
-	
-
-	/**
-	 * Draws the player as a triangle centered on the player's location.
-	 * 
-	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
-	 */
-	draw(graphics) {
-		graphics.strokeStyle = '#000000';
-		graphics.beginPath();
-		graphics.moveTo(
-			this.position.x,
-			this.position.y - this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x + this.half_size.width,
-			this.position.y + this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x - this.half_size.width,
-			this.position.y + this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x,
-			this.position.y - this.half_size.height
-		);
-		graphics.stroke();
-		// draw velocity lines
-		super.draw(graphics);
-	}
-
-	/**
-	 * Updates the player given the state of the player's controller.
-	 * 
-	 * @param {Number} delta_time Time in seconds since last update call.
-	 */
-	update(delta_time) {
-		// Moving only left or right
-		if (this.controller.move_x != 0 && this.controller.move_y == 0) {
-			this.velocity.y = 0;
-			this.velocity.x = this.controller.move_x * this.speed;
-		}
-		// Moving only up or down
-		else if (this.controller.move_y != 0 && this.controller.move_x == 0) {
-			this.velocity.x = 0;
-			this.velocity.y = this.controller.move_y * this.speed;
-		}
-		// Moving diagonally
-		else if (this.controller.move_y != 0 && this.controller.move_x != 0) {
-			this.velocity.x = this.controller.move_x * Math.sqrt(Math.pow(this.speed, 2) / 2)
-			this.velocity.y = this.controller.move_y * Math.sqrt(Math.pow(this.speed, 2) / 2)
-		}
-		// No movement so set velocity to 0
-		else {
-			this.velocity.x = 0;
-			this.velocity.y = 0;
-		}
-		if(this.controller.action_1){
-			new player_Combat(this.position.x, this.position.y);
-		}
-		// console.log(this.position);
-		super.update(delta_time);
-		
-		// clip to screen
-		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
-		this.position.y = Math.min(Math.max(0, this.position.y), config.canvas_size.height);
-	}
-}
-
-
-
-/**
- * Represents an enemy body.
- * 
- * @typedef Enemy
- */
-class Enemy extends Body {
-	// this controller object stays the same since enemies only move down
-	controller = {
-		move_x: 0,
-		move_y: 1,
-		action_1: false
-	};
-	speed = 100;
-
-	/**
-	 * Creates a new enemy with the default attributes.
-	 */   
-	constructor() {
-		super();
-
-		// new enemies spawn above the top boarder of the canvas, and at a random x position
-		this.position = {
-			x: Math.random() * (config.canvas_size.width - 0) + 0,
-			y: -20
-		};
-	}
-
-	/**
-	 * Draws the enemy as a red triangle
-	 * 
-	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
-	 */
-	draw(graphics) {
-		graphics.strokeStyle = 'red';
-		graphics.beginPath();
-		graphics.moveTo(
-			this.position.x,
-			this.position.y - this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x + this.half_size.width,
-			this.position.y + this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x - this.half_size.width,
-			this.position.y + this.half_size.height
-		);
-		graphics.lineTo(
-			this.position.x,
-			this.position.y - this.half_size.height
-		);
-		graphics.stroke();
-
-		// draw velocity lines
-		super.draw(graphics);
-	}
-
-	/**
-	 * Updates the enemy given the state of the enemy's controller.
-	 * Note that the enemy's controller should never update, so it will only move down
-	 * 
-	 * @param {Number} delta_time Time in seconds since last update call.
-	 */
-	update(delta_time) {
-		this.velocity.y = this.controller.move_y * this.speed;
-		super.update(delta_time);
-
-		// Remove this entity once it has gone below the bottom border of the canvas
-		if (this.position.y > config.canvas_size.height) {
-			this.remove();
-		}
-
-	}
-
-}
-
-/**
- * Responsible for detecting collision between entities 
- * 
- * @typedef EnemySpawner
- */
-class EnemySpawner {
-	// Counts the number of seconds since the last time update was called.
-	secondsSinceUpdate = 0;
-
-	/** 
-	 * Spawns in 6 new enemies per second
-	 * 
-	 * @param {Number} delta_time Time in seconds since last update call.
-	 */
-	update(delta_time) {
-		this.secondsSinceUpdate += delta_time;
-		if (this.secondsSinceUpdate >= 1) {
-			this.secondsSinceUpdate = 0;
-			new Enemy();
-			new Enemy();
-			new Enemy();
-			new Enemy();
-			new Enemy();
-			new Enemy();
-		}
-	}
-}
-
-/**
- * Responsible for spawning new enemy entities
- *
- * @typedef CollisionHandler
- */
-class CollisionHandler {
-	count = 0;
-	/**
-	 * Checks for a collision between every pair of entities
-	 * 
-	 * @param {Number} delta_time Time in seconds since last update call.
-	 */
-	update(delta_time) {
-		
-		Object.values(entities).forEach(entity1 => {
-			Object.values(entities).forEach(entity2 => {
-				// Handle edge case where the entity is compared to itself
-				if (entity1.id != entity2.id) {
-					if (entity1.position.x < entity2.position.x + entity2.size.width &&
-						entity1.position.x + entity1.size.width > entity2.position.x &&
-						entity1.position.y < entity2.position.y + entity2.size.height &&
-						entity1.position.y + entity1.size.height > entity2.position.y) {
-						// collision detected!
-						if(entity1.constructor.name == "player_Combat"){
-							// entity1 is a player, take 25 damage (collision detected twice, so -12.5)
-							// entity2 must be an enemy, remove it
-							this.count += 0.5;
-							entity2.remove();
-							
-						} else if (entity2.constructor.name == "player_Combat") {
-							// entity1 must be an enemy, remove it
-							// entity2 is a player, take 25 damage (collision detected twice, so -12.5)
-							entity1.remove();	
-							this.count += 0.5;						
-						}
-						if(entity1.constructor.name == "Player"){
-							// entity1 is a player, take 25 damage (collision detected twice, so -12.5)
-							// entity2 must be an enemy, remove it
-							entity1.health -= 12.5;
-							entity2.remove();
-
-							
-						} else if (entity2.constructor.name == "Player") {
-							// entity1 must be an enemy, remove it
-							// entity2 is a player, take 25 damage (collision detected twice, so -12.5)
-							entity1.remove();
-							entity2.health -= 12.5;
-							
-						}
-
-					}
-				}
-			});
-		});
-	}
-}
-
-
 /* 
 ------------------------------
 ------ CONFIG SECTION -------- 
@@ -501,7 +456,6 @@ config.update_rate.seconds = 1 / config.update_rate.fps;
 
 // grab the html span
 const game_state = document.getElementById('game_state');
-const player_health = document.getElementById('player_health');
 
 // grab the html canvas
 const game_canvas = document.getElementById('game_canvas');
@@ -551,12 +505,17 @@ var enemy_spawner = null;
 /* You must implement this, assign it a value in the start() function */
 var collision_handler = null;
 
+//Number of enemies killed
+var points_scored = 0;
 /**
  * This function updates the state of the world given a delta time.
  * 
  * @param {Number} delta_time Time since last update in seconds.
  */
 function update(delta_time) {
+	// poll input
+	player.input_handler.pollController();
+
 	// move entities
 	Object.values(entities).forEach(entity => {
 		entity.update(delta_time);
@@ -606,9 +565,10 @@ function draw(graphics) {
 	// game over screen
 	if (player.isDead()) {
 		graphics.font = "30px Arial";
+		graphics.fillStyle = "black";
 		graphics.textAlign = "center";
 		graphics.fillText('Game Over', config.canvas_size.width / 2, config.canvas_size.height / 2);
-		  
+
 		graphics.font = "12px Arial";
 		graphics.textAlign = "center";
 		graphics.fillText('press space to restart', config.canvas_size.width / 2, 18 + config.canvas_size.height / 2);
@@ -643,9 +603,9 @@ function loop(curr_time) {
 		last_time = curr_time;
 		loop_count++;
 
-		game_state.innerHTML = `Loop Count: ${loop_count}`;
-		player_health.innerHTML = `Player Health: ${player.health}`;
-		enemy_killed.innerHTML = `Enemy Killed:${collision_handler.count}`;
+		game_state.innerHTML = `loop count ${loop_count}`;
+		enemy_killed.innerHTML = `Enemy Killed ${points_scored}`;
+		player_health.innerHTML = `health ${player.health}`;
 	}
 
 	window.requestAnimationFrame(loop);
@@ -655,11 +615,9 @@ function start() {
 	entities = [];
 	queued_entities_for_removal = [];
 	player = new Player();
-	
 	enemy_spawner = new EnemySpawner();
-	collision_handler = new CollisionHandler();
 }
- 
+
 // start the game
 start();
 
