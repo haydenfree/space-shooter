@@ -174,7 +174,6 @@ class Player extends Body {
 	raw_input = {};
 	speed = 100;
 	input_handler = null;
-	cooldown = 1;
 	/**
 	 * Creates a new player with the default attributes.
 	 */
@@ -236,7 +235,6 @@ class Player extends Body {
 			You can also log the current state of the player's controller with the following code
 			console.log(this.controller);
 		 */
-		console.log(this.controller);
 		if(this.controller.move_x == 0){
 			this.velocity.x = this.controller.move_x *this.speed;
 		}
@@ -255,9 +253,8 @@ class Player extends Body {
 		if(this.controller.move_y == -1){
 			this.velocity.y = this.controller.move_y *this.speed;
 		}
-		if(this.controller.action_1 == true && this.cooldown > .5){
+		if(this.controller.action_1){
 			new player_Combat(this.position.x, this.position.y);
-
 		}
 		// update position
 		super.update(delta_time);
@@ -293,7 +290,7 @@ class Enemy extends Body {
 		};
 	}
 	draw(graphics) {
-		graphics.strokeStyle = '#000000';
+		graphics.strokeStyle = '#FF0000';
 		graphics.beginPath();
 		graphics.moveTo(
 			this.position.x,
@@ -320,7 +317,6 @@ class Enemy extends Body {
 			this.position.x + this.size.width > player.position.x &&
 			this.position.y < player.position.y + player.size.height &&
 			this.position.y + this.size.height > player.position.y){
-				console.log("COLLISION DETECTED");
 				this.remove();
 				player.health -= 25;
 			}
@@ -366,7 +362,7 @@ class EnemySpawner {
  */
 class player_Combat extends Body{
 	position = { x: 0, y: 0 };
-	cooldown = 1;
+
 	constructor(x,y){
 		super();
 		this.position.x =  x;
@@ -375,7 +371,7 @@ class player_Combat extends Body{
 	
 
 	draw(graphics) {
-		graphics.strokeStyle = '#000000';
+		graphics.strokeStyle = '#0000FF';
 		graphics.beginPath();
 		graphics.moveTo(
 			this.position.x,
@@ -409,28 +405,25 @@ class player_Combat extends Body{
 					entity1.position.x + entity1.size.width > entity2.position.x &&
 					entity1.position.y < entity2.position.y + entity2.size.height &&
 					entity1.position.y + entity1.size.height > entity2.position.y) {
-						points_scored += 1;
-						if(entity1.constructor.name == "Enemy"){
-							// entity1 must be an enemy, remove it
-							entity1.remove(); 
-							
-						} else if (entity2.constructor.name == "Enemy") {
-							// entity2 must be an enemy, remove it
-							entity2.remove();
-						}
 						
+						if(entity1.constructor.name == ('Enemy' || 'player_Combat')){
+							// entity1 must be an enemy, remove it
+							entity1.remove();
+                            entity2.remove();
+                            points_scored += 1;
+                         
+                        }
 					}
 				}
 			});
 		});
-		if (this.position.y == 0) {  
-			console.log("deleted");  
+		if (this.position.y == 0) { 
 			this.remove();
 		}
 }
 
 
-}
+}  
 /* 
 ------------------------------
 ------ CONFIG SECTION -------- 
