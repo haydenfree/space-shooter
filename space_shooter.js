@@ -351,7 +351,7 @@ class EnemySpawner {
  * 
  * @typedef Projectile
  */
-class player_Combat extends Body{
+class Projectile extends Body{
 	controller = {
 		move_x: 0,
 		move_y: 0,
@@ -424,12 +424,12 @@ class player_Combat extends Body{
 
 }  
 
-class projectileSpawner{
+class ProjectileSpawner{
 	secondsSinceUpdate = 0;
 	update(delta_time){
 		this.secondsSinceUpdate += delta_time;
 		if(player.controller.action_1 && this.secondsSinceUpdate >= 0.5){
-			projectile.push(new player_Combat());
+			projectile.push(new Projectile());
 			this.secondsSinceUpdate = 0;
 		}
 	}
@@ -630,7 +630,7 @@ function start() {
 	queued_entities_for_removal = [];
 	player = new Player();
 	enemy_spawner = new EnemySpawner();
-	projectile_spawner = new projectileSpawner();
+	projectile_spawner = new ProjectileSpawner();
 }
 
 // start the game
