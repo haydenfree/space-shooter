@@ -334,14 +334,11 @@ class EnemySpawner {
 	 */
 	update(delta_time) {
 		this.secondsSinceUpdate += delta_time;
-		if (this.secondsSinceUpdate >= 1) {
+		if (this.secondsSinceUpdate >= .125) {
 			this.secondsSinceUpdate = 0;
 			new Enemy();
 			new Enemy();
-			new Enemy();
-			new Enemy();
-			new Enemy();
-			new Enemy();
+			num_enemies_spawned += 2;
 		}
 	}
 }
@@ -401,15 +398,22 @@ class Projectile extends Body {
 						entity1.position.x + entity1.size.width > entity2.position.x &&
 						entity1.position.y < entity2.position.y + entity2.size.height &&
 						entity1.position.y + entity1.size.height > entity2.position.y) {
-
-
-						if (entity1.constructor.name == ('Enemy' || 'Projectile')) {
-							// entity1 must be an enemy, remove it
-							entity1.remove();
-							entity2.remove();
-							points_scored += 1;
-
+						// Collision detected!
+						if (entity1.constructor.name == "Enemy") {
+							if (entity2.constructor.name == "Projectile") {
+								entity1.remove();
+								entity2.remove();
+								num_enemies_hit += 1;
+							}
 						}
+
+						// if (entity1.constructor.name == ('Enemy' || 'Projectile')) {
+						// 	// entity1 must be an enemy, remove it
+						// 	entity1.remove();
+						// 	entity2.remove();
+						// 	points_scored += 1;
+
+						// }
 					}
 				}
 			});
@@ -510,8 +514,10 @@ var enemy_spawner = null;
 /* You must implement this, assign it a value in the start() function */
 var collision_handler = null;
 
-//Number of enemies killed
-var points_scored = 0;
+// The number of enemies hit
+var num_enemies_hit = 0;
+
+var num_enemies_spawned = 0;
 
 var projectile_spawner = null;
 
@@ -618,9 +624,11 @@ function loop(curr_time) {
 		loop_count++;
 
 		game_state.innerHTML = `Loop Count ${loop_count}`;
-		enemy_killed.innerHTML = `Enemy Killed ${points_scored}`;
+		enemy_spawned.innerHTML = `Enemies Spawned: ${num_enemies_spawned}`
+		enemy_killed.innerHTML = `Enemy Killed ${num_enemies_hit}`;
 		player_health.innerHTML = `Health ${player.health}`;
 		time_alive.innerHTML = `Time Alive: ${Math.floor(curr_time)}`;
+		points_scored.innerHTML = `Points: ${Math.floor(30 * num_enemies_hit + curr_time)}`;
 	}
 	if (!player.isDead()) {
 		window.requestAnimationFrame(loop);
