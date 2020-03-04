@@ -246,9 +246,6 @@ class Player extends Body {
 			this.velocity.x = 0;
 			this.velocity.y = 0;
 		}
-		if (this.controller.action_1) {
-			new Projectile(this.position.x, this.position.y);
-		}
 		// update position
 		super.update(delta_time);
 
@@ -348,18 +345,25 @@ class EnemySpawner {
 		}
 	}
 }
+
 /**
  * Represents a projectile for a player combat functionality
  * 
  * @typedef Projectile
  */
-class Projectile extends Body {
-	position = { x: 0, y: 0 };
+class player_Combat extends Body{
+	controller = {
+		move_x: 0,
+		move_y: 0,
+	};
+	raw_input = {};
+	speed = 100;
+	input_handler = null;
 
-	constructor(x, y) {
+	constructor(){
 		super();
-		this.position.x = x;
-		this.position.y = y - 10;
+		this.position.x =  player.position.x;
+		this.position.y =  player.position.y-10;
 	}
 
 	draw(graphics) {
@@ -386,8 +390,8 @@ class Projectile extends Body {
 		super.draw(graphics);
 	}
 
-	update(delta_time) {
-		this.position.y -= 5;
+	update(delta_time){
+		this.position.y -= 5 ; 
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
 		Object.values(entities).forEach(entity1 => {
@@ -409,13 +413,28 @@ class Projectile extends Body {
 				}
 			});
 		});
-		if (this.position.y == 0) {
+		// clip to screen
+		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
+		this.position.y = Math.min(Math.max(-100, this.position.y), config.canvas_size.height);
+		if (this.position.y == 0) { 
 			this.remove();
 		}
 	}
 
 
+}  
+
+class projectileSpawner{
+	secondsSinceUpdate = 0;
+	update(delta_time){
+		this.secondsSinceUpdate += delta_time;
+		if(player.controller.action_1 && this.secondsSinceUpdate >= 0.5){
+			projectile.push(new player_Combat());
+			this.secondsSinceUpdate = 0;
+		}
+	}
 }
+
 /* 
 ------------------------------
 ------ CONFIG SECTION -------- 
@@ -492,6 +511,11 @@ var collision_handler = null;
 
 //Number of enemies killed
 var points_scored = 0;
+
+var projectile_spawner = null;
+
+var projectile = [];
+
 /**
  * This function updates the state of the world given a delta time.
  * 
@@ -522,6 +546,10 @@ function update(delta_time) {
 		enemy_spawner.update(delta_time);
 	}
 
+	if (projectile_spawner != null) {
+		projectile_spawner.update(delta_time);
+	}
+
 	// allow the player to restart when dead
 	if (player.isDead() && player.controller.action_1) {
 		start();
@@ -549,6 +577,7 @@ function draw(graphics) {
 
 	// game over screen
 	if (player.isDead()) {
+		player.remove();
 		graphics.font = "30px Arial";
 		graphics.fillStyle = "black";
 		graphics.textAlign = "center";
@@ -559,7 +588,6 @@ function draw(graphics) {
 		graphics.fillText('press space to restart', config.canvas_size.width / 2, 18 + config.canvas_size.height / 2);
 	}
 }
-
 /**
  * This is the main driver of the game. This is called by the window requestAnimationFrame event.
  * This function calls the update and draw methods at static intervals. That means regardless of
@@ -592,8 +620,9 @@ function loop(curr_time) {
 		enemy_killed.innerHTML = `Enemy Killed ${points_scored}`;
 		player_health.innerHTML = `Health ${player.health}`;
 	}
-
-	window.requestAnimationFrame(loop);
+	if(!player.isDead()){
+		window.requestAnimationFrame(loop);
+	}
 }
 
 function start() {
@@ -601,6 +630,7 @@ function start() {
 	queued_entities_for_removal = [];
 	player = new Player();
 	enemy_spawner = new EnemySpawner();
+	projectile_spawner = new projectileSpawner();
 }
 
 // start the game
