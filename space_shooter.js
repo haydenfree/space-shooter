@@ -226,32 +226,25 @@ class Player extends Body {
 	 * @param {Number} delta_time Time in seconds since last update call.
 	 */
 	update(delta_time) {
-		/*
-			implement player movement here!
-
-			I recommend you look at the development console's log to get a hint as to how you can use the
-			controllers state to implement movement.
-
-			You can also log the current state of the player's controller with the following code
-			console.log(this.controller);
-		 */
-		if (this.controller.move_x == 0) {
+		// Moving only left or right
+		if (this.controller.move_x != 0 && this.controller.move_y == 0) {
+			this.velocity.y = 0;
 			this.velocity.x = this.controller.move_x * this.speed;
 		}
-		if (this.controller.move_x == 1) {
-			this.velocity.x = this.controller.move_x * this.speed;
-		}
-		if (this.controller.move_x == -1) {
-			this.velocity.x = this.controller.move_x * this.speed;
-		}
-		if (this.controller.move_y == 0) {
+		// Moving only up or down
+		else if (this.controller.move_y != 0 && this.controller.move_x == 0) {
+			this.velocity.x = 0;
 			this.velocity.y = this.controller.move_y * this.speed;
 		}
-		if (this.controller.move_y == 1) {
-			this.velocity.y = this.controller.move_y * this.speed;
+		// Moving diagonally
+		else if (this.controller.move_y != 0 && this.controller.move_x != 0) {
+			this.velocity.x = this.controller.move_x * Math.sqrt(Math.pow(this.speed, 2) / 2)
+			this.velocity.y = this.controller.move_y * Math.sqrt(Math.pow(this.speed, 2) / 2)
 		}
-		if (this.controller.move_y == -1) {
-			this.velocity.y = this.controller.move_y * this.speed;
+		// No movement so set velocity to 0
+		else {
+			this.velocity.x = 0;
+			this.velocity.y = 0;
 		}
 		if (this.controller.action_1) {
 			new Projectile(this.position.x, this.position.y);
