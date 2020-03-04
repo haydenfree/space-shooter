@@ -351,7 +351,7 @@ class EnemySpawner {
  * 
  * @typedef Projectile
  */
-class Projectile extends Body{
+class Projectile extends Body {
 	controller = {
 		move_x: 0,
 		move_y: 0,
@@ -360,10 +360,10 @@ class Projectile extends Body{
 	speed = 100;
 	input_handler = null;
 
-	constructor(){
+	constructor() {
 		super();
-		this.position.x =  player.position.x;
-		this.position.y =  player.position.y-10;
+		this.position.x = player.position.x;
+		this.position.y = player.position.y - 10;
 		this.velocity.y = -200;
 	}
 
@@ -391,7 +391,7 @@ class Projectile extends Body{
 		super.draw(graphics);
 	}
 
-	update(delta_time){
+	update(delta_time) {
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
 		Object.values(entities).forEach(entity1 => {
@@ -401,6 +401,7 @@ class Projectile extends Body{
 						entity1.position.x + entity1.size.width > entity2.position.x &&
 						entity1.position.y < entity2.position.y + entity2.size.height &&
 						entity1.position.y + entity1.size.height > entity2.position.y) {
+
 
 						if (entity1.constructor.name == ('Enemy' || 'Projectile')) {
 							// entity1 must be an enemy, remove it
@@ -416,19 +417,19 @@ class Projectile extends Body{
 		// clip to screen
 		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
 		this.position.y = Math.min(Math.max(-100, this.position.y), config.canvas_size.height);
-		if (this.position.y == 0) { 
+		if (this.position.y == 0) {
 			this.remove();
 		}
 	}
 
 
-}  
+}
 
-class ProjectileSpawner{
+class ProjectileSpawner {
 	secondsSinceUpdate = 0;
-	update(delta_time){
+	update(delta_time) {
 		this.secondsSinceUpdate += delta_time;
-		if(player.controller.action_1 && this.secondsSinceUpdate >= 0.5){
+		if (player.controller.action_1 && this.secondsSinceUpdate >= 0.5) {
 			projectile.push(new Projectile());
 			this.secondsSinceUpdate = 0;
 		}
@@ -621,7 +622,7 @@ function loop(curr_time) {
 		player_health.innerHTML = `Health ${player.health}`;
 		time_alive.innerHTML = `Time Alive: ${Math.floor(curr_time)}`;
 	}
-	if(!player.isDead()){
+	if (!player.isDead()) {
 		window.requestAnimationFrame(loop);
 	}
 }
