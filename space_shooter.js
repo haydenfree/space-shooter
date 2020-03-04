@@ -12,13 +12,13 @@
 class InputHandler {
 	key_code_mappings = {
 		button: {
-			32: {key: 'space', state: 'action_1'}
+			32: { key: 'space', state: 'action_1' }
 		},
 		axis: {
-			68: {key: 'right', state: 'move_x', mod: 1},
-			65: {key: 'left', state: 'move_x', mod: -1},
-			87: {key: 'up', state: 'move_y', mod: -1},
-			83: {key: 'down', state: 'move_y', mod: 1}
+			68: { key: 'right', state: 'move_x', mod: 1 },
+			65: { key: 'left', state: 'move_x', mod: -1 },
+			87: { key: 'up', state: 'move_y', mod: -1 },
+			83: { key: 'down', state: 'move_y', mod: 1 }
 		}
 	};
 	player = null;
@@ -93,9 +93,9 @@ class InputHandler {
  * @typedef Body
  */
 class Body {
-	position = {x: 0, y: 0};
-	velocity = {x: 0, y: 0};
-	size = {width: 10, height: 10};
+	position = { x: 0, y: 0 };
+	velocity = { x: 0, y: 0 };
+	size = { width: 10, height: 10 };
 	health = 100;
 
 	/**
@@ -235,26 +235,26 @@ class Player extends Body {
 			You can also log the current state of the player's controller with the following code
 			console.log(this.controller);
 		 */
-		if(this.controller.move_x == 0){
-			this.velocity.x = this.controller.move_x *this.speed;
+		if (this.controller.move_x == 0) {
+			this.velocity.x = this.controller.move_x * this.speed;
 		}
-		if(this.controller.move_x == 1){
-			this.velocity.x = this.controller.move_x *this.speed;
+		if (this.controller.move_x == 1) {
+			this.velocity.x = this.controller.move_x * this.speed;
 		}
-		if(this.controller.move_x == -1){
-			this.velocity.x = this.controller.move_x *this.speed;
+		if (this.controller.move_x == -1) {
+			this.velocity.x = this.controller.move_x * this.speed;
 		}
-		if(this.controller.move_y == 0){
-			this.velocity.y = this.controller.move_y *this.speed;
+		if (this.controller.move_y == 0) {
+			this.velocity.y = this.controller.move_y * this.speed;
 		}
-		if(this.controller.move_y == 1){
-			this.velocity.y = this.controller.move_y *this.speed;
+		if (this.controller.move_y == 1) {
+			this.velocity.y = this.controller.move_y * this.speed;
 		}
-		if(this.controller.move_y == -1){
-			this.velocity.y = this.controller.move_y *this.speed;
+		if (this.controller.move_y == -1) {
+			this.velocity.y = this.controller.move_y * this.speed;
 		}
-		if(this.controller.action_1){
-			new player_Combat(this.position.x, this.position.y);
+		if (this.controller.action_1) {
+			new Projectile(this.position.x, this.position.y);
 		}
 		// update position
 		super.update(delta_time);
@@ -316,10 +316,10 @@ class Enemy extends Body {
 		if (this.position.x < player.position.x + player.size.width &&
 			this.position.x + this.size.width > player.position.x &&
 			this.position.y < player.position.y + player.size.height &&
-			this.position.y + this.size.height > player.position.y){
-				this.remove();
-				player.health -= 25;
-			}
+			this.position.y + this.size.height > player.position.y) {
+			this.remove();
+			player.health -= 25;
+		}
 		// Remove this entity once it has gone below the bottom border of the canvas
 		if (this.position.y >= config.canvas_size.height) {
 			this.remove();
@@ -356,19 +356,18 @@ class EnemySpawner {
 	}
 }
 /**
- * Represents a proctile for a player Combat
+ * Represents a projectile for a player combat functionality
  * 
- * @typedef player_Combat
+ * @typedef Projectile
  */
-class player_Combat extends Body{
+class Projectile extends Body {
 	position = { x: 0, y: 0 };
 
-	constructor(x,y){
+	constructor(x, y) {
 		super();
-		this.position.x =  x;
-		this.position.y =  y-10;
+		this.position.x = x;
+		this.position.y = y - 10;
 	}
-	
 
 	draw(graphics) {
 		graphics.strokeStyle = '#0000FF';
@@ -394,36 +393,36 @@ class player_Combat extends Body{
 		super.draw(graphics);
 	}
 
-	update(delta_time){
-		this.position.y -= 5; 
+	update(delta_time) {
+		this.position.y -= 5;
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
 		Object.values(entities).forEach(entity1 => {
 			Object.values(entities).forEach(entity2 => {
 				if (entity1.id != entity2.id) {
 					if (entity1.position.x < entity2.position.x + entity2.size.width &&
-					entity1.position.x + entity1.size.width > entity2.position.x &&
-					entity1.position.y < entity2.position.y + entity2.size.height &&
-					entity1.position.y + entity1.size.height > entity2.position.y) {
-						
-						if(entity1.constructor.name == ('Enemy' || 'player_Combat')){
+						entity1.position.x + entity1.size.width > entity2.position.x &&
+						entity1.position.y < entity2.position.y + entity2.size.height &&
+						entity1.position.y + entity1.size.height > entity2.position.y) {
+
+						if (entity1.constructor.name == ('Enemy' || 'Projectile')) {
 							// entity1 must be an enemy, remove it
 							entity1.remove();
-                            entity2.remove();
-                            points_scored += 1;
-                         
-                        }
+							entity2.remove();
+							points_scored += 1;
+
+						}
 					}
 				}
 			});
 		});
-		if (this.position.y == 0) { 
+		if (this.position.y == 0) {
 			this.remove();
 		}
+	}
+
+
 }
-
-
-}  
 /* 
 ------------------------------
 ------ CONFIG SECTION -------- 
