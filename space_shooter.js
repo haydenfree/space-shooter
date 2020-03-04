@@ -588,9 +588,9 @@ function loop(curr_time) {
 		last_time = curr_time;
 		loop_count++;
 
-		game_state.innerHTML = `loop count ${loop_count}`;
+		game_state.innerHTML = `Loop Count ${loop_count}`;
 		enemy_killed.innerHTML = `Enemy Killed ${points_scored}`;
-		player_health.innerHTML = `health ${player.health}`;
+		player_health.innerHTML = `Health ${player.health}`;
 	}
 
 	window.requestAnimationFrame(loop);
