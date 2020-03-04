@@ -364,6 +364,7 @@ class Projectile extends Body{
 		super();
 		this.position.x =  player.position.x;
 		this.position.y =  player.position.y-10;
+		this.velocity.y = -200;
 	}
 
 	draw(graphics) {
@@ -391,7 +392,6 @@ class Projectile extends Body{
 	}
 
 	update(delta_time){
-		this.position.y -= 5 ; 
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
 		Object.values(entities).forEach(entity1 => {
@@ -619,6 +619,7 @@ function loop(curr_time) {
 		game_state.innerHTML = `Loop Count ${loop_count}`;
 		enemy_killed.innerHTML = `Enemy Killed ${points_scored}`;
 		player_health.innerHTML = `Health ${player.health}`;
+		time_alive.innerHTML = `Time Alive: ${Math.floor(curr_time)}`;
 	}
 	if(!player.isDead()){
 		window.requestAnimationFrame(loop);
