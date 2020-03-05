@@ -614,7 +614,6 @@ function draw(graphics) {
 		graphics.fillText('press space to restart', config.canvas_size.width / 2, 18 + config.canvas_size.height / 2);
 	}
 }
-
 /**
  * This is the main driver of the game. This is called by the window requestAnimationFrame event.
  * This function calls the update and draw methods at static intervals. That means regardless of
@@ -639,7 +638,7 @@ function loop(curr_time) {
 		draw(graphics);
 		delta_time -= config.update_rate.seconds;
 		last_time = curr_time;
-		if(player.isDead()){
+		if (player.isDead()) {
 			spawn_time = last_time;
 		}
 		loop_count++;
