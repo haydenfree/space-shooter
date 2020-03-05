@@ -545,7 +545,8 @@ var num_enemies_spawned = 0;
 var projectile_spawner = null;
 /** @type {projectile} Stores number of projectile in an array */
 var projectile = [];
-
+/** @type {spawn_time} Stores time of executive start time to record time */
+var spawn_time = 0;
 /**
  * This function updates the state of the world given a delta time.
  * 
@@ -613,6 +614,7 @@ function draw(graphics) {
 		graphics.fillText('press space to restart', config.canvas_size.width / 2, 18 + config.canvas_size.height / 2);
 	}
 }
+
 /**
  * This is the main driver of the game. This is called by the window requestAnimationFrame event.
  * This function calls the update and draw methods at static intervals. That means regardless of
@@ -637,14 +639,17 @@ function loop(curr_time) {
 		draw(graphics);
 		delta_time -= config.update_rate.seconds;
 		last_time = curr_time;
+		if(player.isDead()){
+			spawn_time = last_time;
+		}
 		loop_count++;
 
 		game_state.innerHTML = `Loop Count ${loop_count}`;
 		enemy_spawned.innerHTML = `Enemies Spawned: ${num_enemies_spawned}`
 		enemy_killed.innerHTML = `Enemy Killed ${num_enemies_hit}`;
 		player_health.innerHTML = `Health ${player.health}`;
-		time_alive.innerHTML = `Time Alive: ${Math.floor(curr_time)}`;
-		points_scored.innerHTML = `Points: ${Math.floor(30 * num_enemies_hit + curr_time)}`;
+		time_alive.innerHTML = `Time Alive: ${Math.floor(last_time - spawn_time)}`;
+		points_scored.innerHTML = `Points: ${Math.floor(30 * num_enemies_hit + (last_time - spawn_time))}`;
 	}
 	window.requestAnimationFrame(loop);
 }
