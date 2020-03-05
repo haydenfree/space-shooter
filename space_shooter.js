@@ -269,7 +269,9 @@ class Enemy extends Body {
 	raw_input = {};
 	speed = 100;
 	input_handler = null;
-
+	/**
+	 * Creates a new body with all of the default attributes
+	 */
 	constructor() {
 		super();
 
@@ -279,6 +281,11 @@ class Enemy extends Body {
 			y: -20
 		};
 	}
+	/**
+	 * Draws the Enemy as a triangle which drops from top of the canvas
+	 * 
+	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
+	 */
 	draw(graphics) {
 		graphics.strokeStyle = '#FF0000';
 		graphics.beginPath();
@@ -300,6 +307,11 @@ class Enemy extends Body {
 		);
 		graphics.stroke();
 	}
+	/**
+	 * Updates the Enemy and checks for the collision with player
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
 	update(delta_time) {
 		this.velocity.y = this.controller.move_y * this.speed;
 		super.update(delta_time);
@@ -356,14 +368,20 @@ class Projectile extends Body {
 	raw_input = {};
 	speed = 100;
 	input_handler = null;
-
+	/**
+	 * Creates a new projectile at the x position of player and y-10 position of player
+	 */
 	constructor() {
 		super();
 		this.position.x = player.position.x;
 		this.position.y = player.position.y - 10;
 		this.velocity.y = -200;
 	}
-
+	/**
+	 * Draws a triangle just above a player
+	 * 
+	 * @param {CanvasRenderingContext2D} graphics The current graphics context.
+	 */
 	draw(graphics) {
 		graphics.strokeStyle = '#0000FF';
 		graphics.beginPath();
@@ -387,7 +405,12 @@ class Projectile extends Body {
 		// draw velocity lines
 		super.draw(graphics);
 	}
-
+	/**
+	 * Updates the Projectile as it goes up and checks collision with enemy
+	 * Also updates number of enemeies hit
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
 	update(delta_time) {
 		super.update(delta_time);
 		// Remove this entity once it has gone below the bottom border of the canvas
@@ -406,14 +429,6 @@ class Projectile extends Body {
 								num_enemies_hit += 1;
 							}
 						}
-
-						// if (entity1.constructor.name == ('Enemy' || 'Projectile')) {
-						// 	// entity1 must be an enemy, remove it
-						// 	entity1.remove();
-						// 	entity2.remove();
-						// 	points_scored += 1;
-
-						// }
 					}
 				}
 			});
@@ -421,6 +436,7 @@ class Projectile extends Body {
 		// clip to screen
 		this.position.x = Math.min(Math.max(0, this.position.x), config.canvas_size.width);
 		this.position.y = Math.min(Math.max(-100, this.position.y), config.canvas_size.height);
+		//Deletes the projectile after it goes above the screen
 		if (this.position.y == 0) {
 			this.remove();
 		}
@@ -428,9 +444,18 @@ class Projectile extends Body {
 
 
 }
-
+/**
+ * Represents a projectile Spawner for a player combat functionality
+ * 
+ * @typedef ProjectileSpawner
+ */
 class ProjectileSpawner {
 	secondsSinceUpdate = 0;
+	/**
+	 * Generates one projectile in 1 second and updates projectileSpawner
+	 * 
+	 * @param {Number} delta_time Time in seconds since last update call.
+	 */
 	update(delta_time) {
 		this.secondsSinceUpdate += delta_time;
 		if (player.controller.action_1 && this.secondsSinceUpdate >= 0.5) {
@@ -508,19 +533,17 @@ var queued_entities_for_removal = null;
 /** @type {Player} The active player */
 var player = null;
 
-/* You must implement this, assign it a value in the start() function */
+/** @type {enemy_spawner} This spawns enemy using Enemy class*/
 var enemy_spawner = null;
 
-/* You must implement this, assign it a value in the start() function */
-var collision_handler = null;
 
-// The number of enemies hit
+/** @type {num_enemies_hit} The number of enemies hit*/
 var num_enemies_hit = 0;
-
+/** @type {num_enemies_spawned} The number of enemies spawned in the map*/
 var num_enemies_spawned = 0;
-
+/** @type {projectile_spawner} This spawns Projectile in the map*/
 var projectile_spawner = null;
-
+/** @type {projectile} Stores number of projectile in an array */
 var projectile = [];
 
 /**
@@ -553,6 +576,7 @@ function update(delta_time) {
 		enemy_spawner.update(delta_time);
 	}
 
+	//spawns projectile
 	if (projectile_spawner != null) {
 		projectile_spawner.update(delta_time);
 	}
@@ -630,11 +654,12 @@ function loop(curr_time) {
 		time_alive.innerHTML = `Time Alive: ${Math.floor(curr_time)}`;
 		points_scored.innerHTML = `Points: ${Math.floor(30 * num_enemies_hit + curr_time)}`;
 	}
-	if (!player.isDead()) {
-		window.requestAnimationFrame(loop);
-	}
+	window.requestAnimationFrame(loop);
 }
-
+/**
+ * This is where everything is initiated and games starts running
+ * 
+ */
 function start() {
 	entities = [];
 	queued_entities_for_removal = [];
