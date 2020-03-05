@@ -559,12 +559,6 @@ function update(delta_time) {
 	Object.values(entities).forEach(entity => {
 		entity.update(delta_time);
 	});
-
-	// detect and handle collision events
-	if (collision_handler != null) {
-		collision_handler.update(delta_time);
-	}
-
 	// remove enemies
 	queued_entities_for_removal.forEach(id => {
 		delete entities[id];
@@ -584,6 +578,7 @@ function update(delta_time) {
 	// allow the player to restart when dead
 	if (player.isDead() && player.controller.action_1) {
 		start();
+		window.requestAnimationFrame(loop);
 	}
 }
 
@@ -608,7 +603,6 @@ function draw(graphics) {
 
 	// game over screen
 	if (player.isDead()) {
-		player.remove();
 		graphics.font = "30px Arial";
 		graphics.fillStyle = "black";
 		graphics.textAlign = "center";
@@ -635,14 +629,12 @@ function loop(curr_time) {
 	if (last_time == null) {
 		last_time = curr_time;
 	}
-
 	var delta_time = curr_time - last_time;
 
 	// this allows us to make stable steps in our update functions
 	while (delta_time > config.update_rate.seconds) {
 		update(config.update_rate.seconds);
 		draw(graphics);
-
 		delta_time -= config.update_rate.seconds;
 		last_time = curr_time;
 		loop_count++;
@@ -661,6 +653,11 @@ function loop(curr_time) {
  * 
  */
 function start() {
+	//Initial Setup of the game
+	loop_count = 0;
+	num_enemies_spawned = 0;
+	num_enemies_hit = 0;
+	last_time = null;
 	entities = [];
 	queued_entities_for_removal = [];
 	player = new Player();
