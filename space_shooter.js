@@ -1,3 +1,11 @@
+/**
+ * @author Hayden Free
+ * @author Aayush Karki
+ * @description
+ * 		This is a game called Space Shooter. We use javscript to run the game.
+ * 		We use object oriented programming to implement the player movement and 
+ * 		all other functionality in the game.
+ */
 /* 
 ------------------------------
 ------- INPUT SECTION -------- 
